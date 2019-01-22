@@ -57,7 +57,6 @@ def parse_file(file_name):
 		for event, elem in etree.iterparse(file_name, events=('start', 'end')):
 			i += 1
 			tname = strip_tag_name(elem.tag)
-
 			if event == 'start':
 				if tname == 'page':
 					title = ''
@@ -78,39 +77,18 @@ def parse_file(file_name):
 					categorie, text = grep_categories(elem.text)
 					print(categorie)
 					text = replace_line(text)
-					# print(text)
-			if (i == 1000):
-				return
-				# elif tname == 'id' and not inrevision:
-				# 	id = int(elem.text)
-				# elif tname == 'redirect':
-				# 	redirect = elem.attrib['title']
-				# elif tname == 'ns':
-				# 	ns = int(elem.text)
-				# elif tname == 'page':
-				# 	print("page " + elem.text)
-				# 	totalCount += 1
-				# 	if ns == 10:
-				# 		templateCount += 1
-				# 		templateWriter.writerow([id, title])
-				# 	elif len(redirect) > 0:
-				# 		articleCount += 1
-				# 		articlesWriter.writerow([id, title, redirect])
-				# 	else:
-				# 		redirectCount += 1
-				# 		redirectWriter.writerow([id, title, redirect])
+					print(text)
 
-
-		i = 0
-		with open(file_name, 'r') as f:
-			for line in f:
-				print (i)
-				newline = replace_line(line)
-				print(newline)
-				i += 1
-				if (i == 5890):
-					break ;
-		f.close();
+		# i = 0
+		# with open(file_name, 'r') as f:
+		# 	for line in f:
+		# 		print (i)
+		# 		newline = replace_line(line)
+		# 		print(newline)
+		# 		i += 1
+		# 		if (i == 5890):
+		# 			break ;
+		# f.close();
 	except IOError:
 		print("Error when file tryed to be open")
 		exit(0)
@@ -121,7 +99,7 @@ def parse_file(file_name):
 def main():
 	try:
 		parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-		parser.add_argument("file_name", help="File path")
+		parser.add_argument("file_name", help="File path of the wiki object you find from https://dumps.wikimedia.org/frwiki/latest/")
 		args = parser.parse_args()
 
 		parse_file(args.file_name)
