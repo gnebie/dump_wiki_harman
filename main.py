@@ -2,8 +2,10 @@ import os
 import argparse
 import re
 import xml.etree.ElementTree as etree
+import json
 
 def mounthrepl(matchobj):
+	# gestion des mois
 	if matchobj.group(2) == 'janvier':
 		return ("<date>" + matchobj.group(3) + "01" + matchobj.group(1) + "</date>")
 	if matchobj.group(2) == 'février':
@@ -71,67 +73,74 @@ def grep_categories(text):
 	text = re.sub(r'\[\[Catégorie:.*?\]\]', ' ', text)
 	return cleancategorie, text
 
-
 def strip_tag_name(t):
     idx = k = t.rfind("}")
     if idx != -1:
         t = t[idx + 1:]
     return t
 
-"utf-8"
+def slit_article_to_phrases(text):
+	phrases = text.split('.')
+	return phrases;
 
-def write_file(categorie, text, title):
-	# codecs.open(pathArticles, "w", ENCODING) as articlesFH
-	categorie = etree.Element("categorie")
-	article = etree.SubElement(categorie, "article")
-	article_title = etree.SubElement(article, "title").text = title
-	article_text = etree.SubElement(article, "text").text = text
-	tree = etree.ElementTree(categorie)
-	etree.dump(tree)
-	# print(etree.tostring(tree))
-	print("\n\n\n\n")
+def slit_article_to_pargraphes(text):
+	header = ["Introduction"]
+	for elem in re.findall(r'={2,3}[^=]*?={2,3}\n', text):
+		header.append(re.sub(r'={2,3} ?([^=]*?) ?={2,3}\n', r'\1', elem))
+	split_text = []
+	for elem in re.split(r'={2,3}[^=]*?={2,3}\n', text):
+		split_text.append(slit_article_to_phrases(elem))
+	ret = {}
+	for head, body in zip(header, split_text):
+		ret[head] = body
+	return ret
 
-def parse_file(file_name):
-	try:
-		title = ''
-		text = ''
-		print("test")
-		i = 0
-		for event, elem in etree.iterparse(file_name, events=('start', 'end')):
-			tname = strip_tag_name(elem.tag)
-			if event == 'start':
-				if tname == 'page':
-					title = ''
-					text = ''
-			else:
-				a = 0;
-				# print(tname)
-				if tname == 'title':
-					title = elem.text
-				elif tname == 'text':
-					i += 1
-					categorie, text = grep_categories(elem.text)
-					# print(categorie)
-					text = replace_line(text)
-					# print(text)
-					write_file(categorie, text, title)
-					if i == 2:
-						return ;
-	except IOError:
-		print("Error when file tryed to be open")
-		exit(0)
+def encode_file(categories, text, title):
+	new_file = {}
+	new_file["categories"] = categories
+	new_file["title"] = title
+	new_file["text"] = slit_article_to_pargraphes(text)
+	return new_file
+
+def write_file(categories, text, title):
+	file = open(title + ".json", "w")
+	file.write(json.dumps(encode_file(categories, text, title)))
+	return ;
+
+def parse_file(file_name, nombre):
+	title = ''
+	text = ''
+	print("test")
+	i = 0
+	for event, elem in etree.iterparse(file_name, events=('start', 'end')):
+		tname = strip_tag_name(elem.tag)
+		if event == 'start':
+			if tname == 'page':
+				title = ''
+				text = ''
+		else:
+			if tname == 'title':
+				title = elem.text
+			elif tname == 'text':
+				i += 1
+				categorie, text = grep_categories(elem.text)
+				text = replace_line(text)
+				write_file(categorie, text, title)
+				if i == nombre:
+					return ;
 
 def main():
 	try:
 		parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 		parser.add_argument("file_name", help="File path of the wiki object you find from https://dumps.wikimedia.org/frwiki/latest/")
+		parser.add_argument("nombre_article", type=int, help="nombre d'articles voulus")
 		args = parser.parse_args()
-
-		parse_file(args.file_name)
-		# "/Users/gnebie/goinfre/download/frwiki-latest-pages-articles1.xml-p3p275787"
-	# except:
+		parse_file(args.file_name, args.nombre_article)
 	except IOError:
-		print("Unknow Error catch")
+		print("Error when file tryed to be open")
+		exit(0)
+	# except:
+		# print("Unknow Error catch")
 
 if __name__ == '__main__':
 	main()
