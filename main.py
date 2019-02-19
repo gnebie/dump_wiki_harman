@@ -1,4 +1,3 @@
-import os
 import argparse
 import re
 import xml.etree.ElementTree as etree
@@ -74,7 +73,7 @@ def grep_categories(text):
 	return cleancategorie, text
 
 def strip_tag_name(t):
-    idx = k = t.rfind("}")
+    idx = t.rfind("}")
     if idx != -1:
         t = t[idx + 1:]
     return t
